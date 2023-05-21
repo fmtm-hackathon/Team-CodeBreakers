@@ -1,1 +1,25 @@
 
+
+
+
+// Queries
+WITH NEO AS 
+(WITH prims AS (     
+SELECT ST_Intersection(a.geom, l.geom) AS geom, tags     
+FROM islington_aoi a, islington_lines l     
+WHERE ST_Intersects(a.geom, l.geom)    
+ AND ((tags->>'highway' = 'primary' OR tags->>'highway' = 'secondary') OR tags->>'waterway' IS NOT NULL) ) 
+ SELECT (ST_Dump(ST_Polygonize(ST_Node(multi_geom)))).geom 
+ FROM (     SELECT ST_Collect(s.geom) AS multi_geom     
+ FROM prims s ) prims)  
+SELECT geom, ROW_NUMBER () OVER (
+           ORDER BY geom
+        )
+ from NEO
+
+
+// for filtered building
+SELECT 
+row_number() over () AS _uid_,* FROM (select * from islington_polygons where tags ->> 'building' is not null
+) AS _subq_1_
+
